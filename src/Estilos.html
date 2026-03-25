@@ -1,0 +1,147 @@
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif; /* Fuente más moderna */
+    margin: 0; /* Bootstrap maneja los márgenes del body si es necesario */
+    background-color: #f8f9fa; /* Un gris claro de Bootstrap */
+    color: #212529; /* Color de texto principal de Bootstrap */
+  }
+
+  /* El .container de Bootstrap ya proporciona centrado y padding.
+     Si tu .container actual tiene estilos específicos, puedes fusionarlos o
+     dejar que Bootstrap maneje el layout principal.
+     Por ahora, asumiré que usamos el .container de Bootstrap para el layout.
+  */
+  .custom-container { /* Renombrado para evitar conflicto con Bootstrap si decides mantenerlo */
+    background-color: #fff;
+    padding: 2rem; /* Más padding */
+    border-radius: 0.5rem; /* Bordes más redondeados */
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    max-width: 700px; /* Un poco más ancho */
+    margin: 2rem auto; /* Margen superior/inferior y centrado */
+  }
+
+  h1 {
+    text-align: center;
+    color: #0d6efd; /* Azul primario de Bootstrap */
+    margin-bottom: 1.5rem;
+  }
+
+  fieldset {
+    border: 1px solid #dee2e6; /* Borde de Bootstrap */
+    border-radius: 0.375rem; /* Bootstrap form-control radius */
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  legend {
+    font-weight: 500; /* Ligeramente menos bold que el default */
+    color: #0d6efd;
+    padding: 0 0.5rem;
+    float: none; /* Evitar problemas de layout con fieldset */
+    width: auto; /* Necesario con float: none */
+    font-size: 1.25rem; /* Un poco más grande */
+    margin-bottom: 1rem;
+  }
+
+  label {
+    /* display: block; Bootstrap lo hace para .form-label */
+    margin-top: 0.5rem; /* Ajustado */
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  /* Los inputs, selects, textareas serán estilizados por clases de Bootstrap como .form-control y .form-select */
+
+  button[type="button"].btn-primary { /* Usar clases de Bootstrap para botones */
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  #status {
+    margin-top: 1rem;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .error-message {
+    color: #dc3545; /* Color de error de Bootstrap */
+    font-size: 0.875em;
+    display: block;
+    margin-top: 0.25rem; /* Ajuste */
+    margin-bottom: 0.5rem;
+  }
+
+  .input-error { /* Se aplicará a .form-control.is-invalid de Bootstrap */
+    /* Bootstrap ya maneja esto con .is-invalid */
+  }
+
+
+  /* --- ESTILOS PARA INPUT CON ÍCONOS Y AUTOCOMPLETADO PERSONALIZADO --- */
+  .search-input-container {
+    position: relative;
+    /* El ancho será manejado por Bootstrap (ej. si el input es .form-control) */
+    /* margin-bottom lo da .mb-3 de Bootstrap si se usa en un form-group */
+  }
+
+  .search-input-container .search-icon,
+  .search-input-container .clear-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d; /* Color secundario de Bootstrap */
+    z-index: 3; /* Para estar sobre el input pero debajo de las sugerencias */
+  }
+
+  .search-input-container .search-icon {
+    left: 0.75rem; /* Ajustar al padding del form-control de Bootstrap */
+    pointer-events: none;
+  }
+
+  .search-input-container .clear-icon {
+    right: 0.75rem;
+    cursor: pointer;
+    display: none;
+    font-size: 1.1em;
+  }
+
+  /* Ajustar padding de inputs que tienen íconos */
+  .search-input-container input.form-control {
+    padding-left: 2.5rem;  /* Espacio para el ícono de lupa */
+    padding-right: 2.5rem; /* Espacio para el ícono de borrar */
+  }
+
+  /* Contenedor de sugerencias del Autocompletado */
+  .autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ced4da; /* Borde de Bootstrap */
+    border-top: none;
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    max-height: 220px; /* Altura máxima antes de scroll */
+    overflow-y: auto;  /* Barra de desplazamiento vertical si es necesario */
+    z-index: 1050;     /* Encima de otros elementos (Bootstrap dropdown z-index es 1000) */
+    display: none;     /* Oculto por defecto */
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); /* Sombra de Bootstrap para dropdowns */
+  }
+
+  .autocomplete-suggestions .list-group-item {
+    cursor: pointer;
+    /* Los estilos de padding, hover, etc., vendrán de la clase .list-group-item de Bootstrap */
+  }
+  .autocomplete-suggestions .list-group-item.active {
+      /* Estilo para el item activo/hover si se implementa navegación por teclado */
+      background-color: #e9ecef;
+      border-color: #e9ecef;
+      color: #000;
+  }
+
+  /* Asegurar que el fieldset no corte las sugerencias si position:relative interfiere */
+  fieldset {
+      overflow: visible; /* O considera no poner position:relative en fieldset si causa problemas con position:absolute de sugerencias */
+  }
+
+</style>

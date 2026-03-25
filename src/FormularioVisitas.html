@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  
+  <?!= incluir('Estilos.html'); ?>
+  <title>Registro de Visitantes</title>
+  <style>
+    /* Puedes mover todos los estilos de Estilos.html aquí si prefieres un solo bloque <style> */
+  </style>
+</head>
+<body>
+  <div class="custom-container mt-4 mb-4"> <h1>Registro de Visitantes</h1>
+
+    <form id="visitorForm" novalidate> <fieldset class="mb-3">
+        <legend>Entrada o Salida*</legend>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="tipoAccion" id="tipoAccionEntrada" value="Entrada" onchange="toggleSections()" checked>
+          <label class="form-check-label" for="tipoAccionEntrada">Entrada</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="tipoAccion" id="tipoAccionSalida" value="Salida" onchange="toggleSections()">
+          <label class="form-check-label" for="tipoAccionSalida">Salida</label>
+        </div>
+      </fieldset>
+
+      <div id="seccionEntrada">
+        <fieldset>
+          <legend>Datos del Visitante (Entrada)</legend>
+
+          <div class="mb-3">
+            <label for="esEmpresa" class="form-label">¿Es visita de empresa?*</label>
+            <select class="form-select" id="esEmpresa" name="esEmpresa" onchange="toggleEmpresaFields()">
+              <option value="No" selected>No</option>
+              <option value="Si">Sí</option>
+            </select>
+          </div>
+
+          <div id="camposEmpresa" style="display:none;" class="mb-3">
+            <label for="nombreEmpresa" class="form-label">Nombre de la Empresa:</label>
+            <input type="text" class="form-control" id="nombreEmpresa" name="nombreEmpresa" onblur="validarCampoObligatorioAlSalir(this, 'Nombre de empresa es obligatorio.')">
+            <div id="nombreEmpresaError" class="error-message invalid-feedback"></div> </div>
+
+          <div class="mb-3">
+            <label for="nombreVisitante" class="form-label">Nombre Completo del Visitante*:</label>
+            <input type="text" class="form-control" id="nombreVisitante" name="nombreVisitante" required onblur="validarCampoObligatorioAlSalir(this, 'Nombre de visitante es obligatorio.')">
+            <div id="nombreVisitanteError" class="error-message invalid-feedback"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="rutVisitante" class="form-label">RUT del Visitante*:</label>
+            <input type="text" class="form-control" id="rutVisitante" name="rutVisitante" required
+                   oninput="formatearRutEnInput(this)"
+                   onblur="validarRutAlSalir(this, true)">
+            <div id="rutVisitanteError" class="error-message invalid-feedback"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="correoVisitante" class="form-label">Correo Electrónico*:</label>
+            <input type="email" class="form-control" id="correoVisitante" name="correoVisitante" required onblur="validarEmailAlSalir(this, true)">
+            <div id="correoVisitanteError" class="error-message invalid-feedback"></div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="pisoVisitado" class="form-label">Piso a Visitar*:</label>
+              <select class="form-select" id="pisoVisitado" name="pisoVisitado" onchange="cargarDirecciones()" required onblur="validarCampoObligatorioAlSalir(this, 'Piso es obligatorio.')">
+                <option value="">Seleccione un Piso...</option>
+              </select>
+              <div id="pisoVisitadoError" class="error-message invalid-feedback"></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="direccionVisitada" class="form-label">Dirección a Visitar*:</label>
+              <select class="form-select" id="direccionVisitada" name="direccionVisitada" onchange="cargarFuncionarios()" required disabled>
+                <option value="">Seleccione una Dirección...</option>
+              </select>
+              <div id="direccionVisitadaError" class="error-message invalid-feedback"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="funcionarioInput" class="form-label">Funcionario a Visitar*:</label>
+            <div class="search-input-container autocomplete-container">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" class="form-control" id="funcionarioInput" name="funcionarioInput"
+                     oninput="handleAutocompleteInput(this, 'funcionarioSuggestions', listaCompletaFuncionarios, seleccionarFuncionarioSuggestion)"
+                     onblur="setTimeout(() => hideSuggestions('funcionarioSuggestions'), 200); validarSeleccionFuncionarioAlSalir();"
+                     onfocus="handleAutocompleteInput(this, 'funcionarioSuggestions', listaCompletaFuncionarios, seleccionarFuncionarioSuggestion, true)"
+                     placeholder="Escriba o seleccione funcionario..."
+                     required disabled autocomplete="off">
+              <span class="clear-icon" onclick="clearFuncionarioInput()">&#10005;</span>
+              <div id="funcionarioSuggestions" class="autocomplete-suggestions list-group"></div>
+            </div>
+            <input type="hidden" id="idFuncionarioVisitado" name="idFuncionarioVisitado">
+            <input type="hidden" id="nombreFuncionarioVisitado" name="nombreFuncionarioVisitado">
+            <div id="funcionarioInputError" class="error-message invalid-feedback"></div>
+          </div>
+          
+          <div id="detallesFuncionario" class="card mt-2 mb-3" style="display:none;">
+            <div class="card-body">
+              <h5 class="card-title">Detalles del Funcionario</h5>
+              <p class="card-text mb-1"><strong>Teléfono:</strong> <span id="funcionarioTelefono"></span></p>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="motivoVisita" class="form-label">Motivo de la Visita*:</label>
+            <textarea class="form-control" id="motivoVisita" name="motivoVisita" rows="3" required onblur="validarCampoObligatorioAlSalir(this, 'Motivo de visita es obligatorio.')"></textarea>
+            <div id="motivoVisitaError" class="error-message invalid-feedback"></div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="seccionSalida" style="display:none;">
+        <fieldset>
+          <legend>Datos de Salida</legend>
+          <div class="mb-3">
+            <label for="visitanteSalidaInput" class="form-label">Visitante que Sale*:</label>
+            <div class="search-input-container autocomplete-container">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" class="form-control" id="visitanteSalidaInput" name="visitanteSalidaInput"
+                     oninput="handleAutocompleteInput(this, 'visitanteSalidaSuggestions', listaVisitantesDentro, seleccionarVisitanteSalidaSuggestion, formatVisitanteSalidaOption)"
+                     onblur="setTimeout(() => hideSuggestions('visitanteSalidaSuggestions'), 200); validarSeleccionVisitanteSalida();"
+                     onfocus="handleAutocompleteInput(this, 'visitanteSalidaSuggestions', listaVisitantesDentro, seleccionarVisitanteSalidaSuggestion, true, formatVisitanteSalidaOption)"
+                     placeholder="Escriba o seleccione visitante..."
+                     required autocomplete="off">
+              <span class="clear-icon" onclick="clearVisitanteSalidaInput()">&#10005;</span>
+              <div id="visitanteSalidaSuggestions" class="autocomplete-suggestions list-group"></div>
+            </div>
+            <input type="hidden" id="rutSalidaHidden" name="rutSalida">
+            <input type="hidden" id="nombreSalidaHidden" name="nombreSalida">
+            <div id="visitanteSalidaInputError" class="error-message invalid-feedback"></div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="d-grid"> <button type="button" class="btn btn-primary btn-lg" onclick="enviarFormulario()">Registrar</button>
+      </div>
+      <div id="status" class="mt-3"></div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <script>
+    // --- Lógica del Cliente (JavaScript) ---
+    let listaCompletaFuncionarios = []; // {id: '', nombre: ''}
+    let listaVisitantesDentro = [];   // {rut: '', nombre: ''}
+
+    // --- INICIALIZACIÓN Y MANEJO DE SECCIONES ---
+    window.onload = function() {
+      cargarPisos();
+      toggleSections();
+      // Inicializar botones de limpiar
+      toggleClearButton(document.getElementById('funcionarioInput'), 'funcionarioSuggestions');
+      toggleClearButton(document.getElementById('visitanteSalidaInput'), 'visitanteSalidaSuggestions');
+    };
+
+    function toggleSections() {
+      // ... (lógica de toggleSections como la tenías, adaptando los required para los nuevos IDs si es necesario) ...
+      // (Asegúrate que al cambiar de sección, los campos de autocompletado se resetean bien)
+        const tipoAccion = document.querySelector('input[name="tipoAccion"]:checked').value;
+        const seccionEntrada = document.getElementById('seccionEntrada');
+        const seccionSalida = document.getElementById('seccionSalida');
+        const esEntrada = (tipoAccion === 'Entrada');
+
+        seccionEntrada.style.display = esEntrada ? 'block' : 'none';
+        seccionSalida.style.display = esEntrada ? 'none' : 'block';
+
+        // Resetear clases de validación de Bootstrap
+        document.querySelectorAll('.form-control, .form-select').forEach(el => {
+            el.classList.remove('is-invalid', 'is-valid');
+        });
+        document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
+
+
+        const entradaRequiredFields = [
+            'nombreVisitante', 'rutVisitante', 'correoVisitante', 
+            'pisoVisitado', 'direccionVisitada', 'funcionarioInput', 'motivoVisita'
+        ];
+        const salidaRequiredFields = ['visitanteSalidaInput'];
+
+        entradaRequiredFields.forEach(id => {
+            const field = document.getElementById(id);
+            if (field) field.required = esEntrada;
+        });
+        salidaRequiredFields.forEach(id => {
+            const field = document.getElementById(id);
+            if (field) field.required = !esEntrada;
+        });
+
+        if (esEntrada) {
+            toggleEmpresaFields();
+            clearVisitanteSalidaInput(false); // Limpiar campo de salida de visitante
+            hideSuggestions('visitanteSalidaSuggestions');
+        } else { // Es Salida
+            // Limpiar campos de entrada
+            const formEntrada = document.getElementById('seccionEntrada');
+            formEntrada.querySelectorAll('input[type="text"], input[type="email"], textarea').forEach(field => field.value = '');
+            formEntrada.querySelectorAll('select').forEach(field => field.selectedIndex = 0);
+            
+            clearFuncionarioInput(false); // Limpiar campo de funcionario
+            hideSuggestions('funcionarioSuggestions');
+            document.getElementById('detallesFuncionario').style.display = 'none';
+            document.getElementById('funcionarioInput').disabled = true;
+            document.getElementById('direccionVisitada').disabled = true;
+            
+            cargarVisitantesParaSalida();
+        }
+        // Actualizar estado de botones X
+        toggleClearButton(document.getElementById('funcionarioInput'));
+        toggleClearButton(document.getElementById('visitanteSalidaInput'));
+    }
+
+    function toggleEmpresaFields() {
+        const esEmpresaSelect = document.getElementById('esEmpresa');
+        const nombreEmpresaInput = document.getElementById('nombreEmpresa');
+        const nombreEmpresaDiv = document.getElementById('camposEmpresa');
+        const esVisitaEmpresa = esEmpresaSelect.value === 'Si';
+        const esEntrada = document.querySelector('input[name="tipoAccion"]:checked').value === 'Entrada';
+
+        nombreEmpresaDiv.style.display = esVisitaEmpresa ? 'block' : 'none';
+        nombreEmpresaInput.required = esVisitaEmpresa && esEntrada;
+        
+        if (!esVisitaEmpresa) {
+            nombreEmpresaInput.value = '';
+            clearFieldValidation(nombreEmpresaInput);
+        }
+    }
+
+    // --- LÓGICA DE CARGA DE DATOS (Pisos, Direcciones, Funcionarios, Visitantes Dentro) ---
+    function cargarPisos() { /* ... (igual, pero usa .form-select para Bootstrap) ... */
+        google.script.run
+            .withSuccessHandler(pisos => {
+                const selectPiso = document.getElementById('pisoVisitado');
+                selectPiso.innerHTML = '<option value="">Seleccione un Piso...</option>';
+                if (pisos && pisos.length > 0) {
+                    pisos.forEach(piso => {
+                        selectPiso.add(new Option(piso, piso));
+                    });
+                } else {
+                    selectPiso.add(new Option("No hay pisos disponibles", ""));
+                }
+            }).withFailureHandler(showError).obtenerPisosUnicos();
+    }
+
+    function cargarDirecciones() { /* ... (igual, limpia campos de funcionario) ... */
+        const piso = document.getElementById('pisoVisitado').value;
+        const selectDireccion = document.getElementById('direccionVisitada');
+        clearFieldValidation(document.getElementById('pisoVisitado'));
+        
+        selectDireccion.innerHTML = '<option value="">Cargando...</option>';
+        selectDireccion.disabled = true;
+        clearFuncionarioInput(false); // Limpiar datos del funcionario
+        document.getElementById('funcionarioInput').disabled = true;
+
+        if (!piso) {
+            selectDireccion.innerHTML = '<option value="">Seleccione una Dirección...</option>';
+            return;
+        }
+        google.script.run
+            .withSuccessHandler(direcciones => {
+                selectDireccion.innerHTML = '<option value="">Seleccione una Dirección...</option>';
+                if (direcciones && direcciones.length > 0) {
+                    direcciones.forEach(dir => selectDireccion.add(new Option(dir, dir)));
+                    selectDireccion.disabled = false;
+                } else {
+                     selectDireccion.add(new Option("No hay direcciones para este piso", ""));
+                }
+            }).withFailureHandler(showError).obtenerDireccionesPorPiso(piso);
+    }
+
+    function cargarFuncionarios() { /* ... (puebla 'listaCompletaFuncionarios') ... */
+        const piso = document.getElementById('pisoVisitado').value;
+        const direccion = document.getElementById('direccionVisitada').value;
+        const funcInput = document.getElementById('funcionarioInput');
+        clearFieldValidation(document.getElementById('direccionVisitada'));
+
+        clearFuncionarioInput(false); // Limpia el input y los hidden fields
+        funcInput.disabled = true;
+        funcInput.placeholder = 'Seleccione dirección';
+
+        if (!direccion) return;
+
+        funcInput.placeholder = 'Cargando funcionarios...';
+        google.script.run
+            .withSuccessHandler(funcionarios => {
+                listaCompletaFuncionarios = funcionarios || [];
+                funcInput.disabled = false;
+                funcInput.placeholder = listaCompletaFuncionarios.length > 0 ? 'Escriba o seleccione funcionario...' : 'No hay funcionarios';
+            })
+            .withFailureHandler(showError)
+            .obtenerFuncionariosPorPisoDireccion(piso, direccion);
+    }
+    
+    function mostrarDetallesFuncionario() {
+        const idFuncionario = document.getElementById('idFuncionarioVisitado').value;
+        const divDetalles = document.getElementById('detallesFuncionario');
+        const spanTelefono = document.getElementById('funcionarioTelefono');
+        if (!idFuncionario) {
+            divDetalles.style.display = 'none';
+            return;
+        }
+        // Aquí ya no se alerta, la validación es en el blur o submit
+        google.script.run
+            .withSuccessHandler(detalles => {
+                if (detalles && detalles.telefono) {
+                    spanTelefono.textContent = detalles.telefono;
+                    divDetalles.style.display = 'block';
+                } else {
+                     spanTelefono.textContent = 'N/A'; // Ocultar si no hay tel o detalles
+                     divDetalles.style.display = detalles ? 'block' : 'none'; // Mostrar si hay detalles aunque no tel
+                }
+            })
+            .withFailureHandler(showError)
+            .obtenerDetallesFuncionario(idFuncionario);
+    }
+    
+    function cargarVisitantesParaSalida() {
+        const visSalidaInput = document.getElementById('visitanteSalidaInput');
+        visSalidaInput.placeholder = 'Cargando visitantes...';
+        visSalidaInput.disabled = true;
+        google.script.run
+            .withSuccessHandler(visitantes => {
+                listaVisitantesDentro = visitantes || [];
+                visSalidaInput.disabled = false;
+                visSalidaInput.placeholder = listaVisitantesDentro.length > 0 ? 'Escriba o seleccione visitante...' : 'No hay visitantes dentro';
+            })
+            .withFailureHandler(showError)
+            .obtenerVisitantesDentro();
+    }
+
+    // --- LÓGICA DE AUTOCOMPLETADO PERSONALIZADO ---
+    function handleAutocompleteInput(inputElement, suggestionsId, sourceList, selectionCallback, showAllOnFocus = false, optionFormatter) {
+        const suggestionsDiv = document.getElementById(suggestionsId);
+        const filter = inputElement.value.toLowerCase();
+        suggestionsDiv.innerHTML = ''; // Limpiar sugerencias anteriores
+
+        if (showAllOnFocus && filter === "" && inputElement === document.activeElement) {
+             // Mostrar todas las opciones si el input está en foco y vacío
+            const itemsToShow = sourceList.slice(0, 10); // Limitar para no sobrecargar, o todas si son pocas
+             if (itemsToShow.length > 0) {
+                itemsToShow.forEach(item => addSuggestionItem(suggestionsDiv, item, inputElement, selectionCallback, optionFormatter));
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+            toggleClearButton(inputElement);
+            return;
+        }
+
+
+        if (filter.length === 0 && !showAllOnFocus) {
+            suggestionsDiv.style.display = 'none';
+            toggleClearButton(inputElement);
+            // Si el input se vacía, limpiar los campos hidden correspondientes
+            if (inputElement.id === 'funcionarioInput') {
+                 document.getElementById('idFuncionarioVisitado').value = '';
+                 document.getElementById('nombreFuncionarioVisitado').value = '';
+                 document.getElementById('detallesFuncionario').style.display = 'none';
+            } else if (inputElement.id === 'visitanteSalidaInput') {
+                 document.getElementById('rutSalidaHidden').value = '';
+                 document.getElementById('nombreSalidaHidden').value = '';
+            }
+            return;
+        }
+
+        const filteredItems = sourceList.filter(item => {
+            // Asumimos que 'item' tiene una propiedad 'nombre' o la que sea relevante para la búsqueda
+            const itemName = optionFormatter ? optionFormatter(item, true) : item.nombre;
+            return itemName.toLowerCase().includes(filter);
+        });
+
+        if (filteredItems.length > 0) {
+            filteredItems.forEach(item => addSuggestionItem(suggestionsDiv, item, inputElement, selectionCallback, optionFormatter));
+            suggestionsDiv.style.display = 'block';
+        } else {
+            suggestionsDiv.style.display = 'none';
+        }
+        toggleClearButton(inputElement);
+         // Si el usuario escribe y no hay match, limpiar selección previa (si la había)
+        if (inputElement.id === 'funcionarioInput' && !filteredItems.some(item => (optionFormatter ? optionFormatter(item) : item.nombre) === inputElement.value)) {
+            document.getElementById('idFuncionarioVisitado').value = '';
+            document.getElementById('nombreFuncionarioVisitado').value = '';
+            document.getElementById('detallesFuncionario').style.display = 'none';
+        } else if (inputElement.id === 'visitanteSalidaInput' && !filteredItems.some(item => (optionFormatter ? optionFormatter(item) : item.nombre) === inputElement.value)) {
+             document.getElementById('rutSalidaHidden').value = '';
+             document.getElementById('nombreSalidaHidden').value = '';
+        }
+    }
+
+    function addSuggestionItem(suggestionsDiv, item, inputElement, selectionCallback, optionFormatter) {
+        const suggestionItem = document.createElement('a'); // Usar 'a' para que Bootstrap le de estilo de item
+        suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+        const displayText = optionFormatter ? optionFormatter(item) : item.nombre;
+        suggestionItem.textContent = displayText;
+        suggestionItem.href = "#"; // Para que se vea como link
+        suggestionItem.onclick = (e) => {
+            e.preventDefault(); // Evitar que el '#' navegue
+            selectionCallback(item, inputElement, suggestionsDiv);
+        };
+        suggestionsDiv.appendChild(suggestionItem);
+    }
+    
+    function formatVisitanteSalidaOption(item, forFilter = false) { // El segundo parámetro es para obtener el texto de búsqueda
+        if (!item) return "";
+        return forFilter ? `${item.nombre} ${item.rut}` : `${item.nombre} (${item.rut})`;
+    }
+
+    function seleccionarFuncionarioSuggestion(item, inputElement, suggestionsDiv) {
+        inputElement.value = item.nombre;
+        document.getElementById('idFuncionarioVisitado').value = item.id;
+        document.getElementById('nombreFuncionarioVisitado').value = item.nombre;
+        suggestionsDiv.style.display = 'none';
+        mostrarDetallesFuncionario();
+        clearFieldValidation(inputElement); // Limpiar error si lo había
+        toggleClearButton(inputElement);
+    }
+
+    function seleccionarVisitanteSalidaSuggestion(item, inputElement, suggestionsDiv) {
+        inputElement.value = formatVisitanteSalidaOption(item); // `${item.nombre} (${item.rut})`;
+        document.getElementById('rutSalidaHidden').value = item.rut;
+        document.getElementById('nombreSalidaHidden').value = item.nombre;
+        suggestionsDiv.style.display = 'none';
+        clearFieldValidation(inputElement);
+        toggleClearButton(inputElement);
+    }
+
+    function hideSuggestions(suggestionsId) {
+        document.getElementById(suggestionsId).style.display = 'none';
+    }
+
+    function toggleClearButton(inputElement) {
+        if (!inputElement) return;
+        const container = inputElement.closest('.search-input-container');
+        if (!container) return;
+        const clearIcon = container.querySelector('.clear-icon');
+        if (clearIcon) {
+            clearIcon.style.display = (inputElement.value && inputElement.value.length > 0 && !inputElement.disabled) ? 'inline' : 'none';
+        }
+    }
+
+    function clearFuncionarioInput(focusInput = true) {
+        const inputElem = document.getElementById('funcionarioInput');
+        inputElem.value = '';
+        document.getElementById('idFuncionarioVisitado').value = '';
+        document.getElementById('nombreFuncionarioVisitado').value = '';
+        document.getElementById('detallesFuncionario').style.display = 'none';
+        hideSuggestions('funcionarioSuggestions');
+        clearFieldValidation(inputElem);
+        toggleClearButton(inputElem);
+        if (focusInput && !inputElem.disabled) inputElem.focus();
+    }
+
+    function clearVisitanteSalidaInput(focusInput = true) {
+        const inputElem = document.getElementById('visitanteSalidaInput');
+        inputElem.value = '';
+        document.getElementById('rutSalidaHidden').value = '';
+        document.getElementById('nombreSalidaHidden').value = '';
+        hideSuggestions('visitanteSalidaSuggestions');
+        clearFieldValidation(inputElem);
+        toggleClearButton(inputElem);
+        if (focusInput && !inputElem.disabled) inputElem.focus();
+    }
+    
+    // --- FUNCIONES DE VALIDACIÓN (adaptadas para Bootstrap) ---
+    function setFieldValid(inputElement) {
+        inputElement.classList.remove('is-invalid');
+        inputElement.classList.add('is-valid');
+        const errorDiv = document.getElementById(inputElement.id + 'Error');
+        if (errorDiv) errorDiv.textContent = '';
+    }
+
+    function setFieldInvalid(inputElement, message) {
+        inputElement.classList.remove('is-valid');
+        inputElement.classList.add('is-invalid');
+        const errorDiv = document.getElementById(inputElement.id + 'Error');
+        if (errorDiv) errorDiv.textContent = message;
+    }
+    
+    function clearFieldValidation(inputElement) {
+        inputElement.classList.remove('is-invalid', 'is-valid');
+        const errorDiv = document.getElementById(inputElement.id + 'Error');
+        if (errorDiv) errorDiv.textContent = '';
+    }
+
+    function validarCampoObligatorioAlSalir(inputElement, mensajeError) {
+      // Solo validar si es visible y requerido
+      if (inputElement.offsetParent === null || !inputElement.required) {
+        clearFieldValidation(inputElement);
+        return true;
+      }
+      if (!inputElement.value || (inputElement.tagName === 'SELECT' && inputElement.value === "")) {
+        setFieldInvalid(inputElement, mensajeError || 'Este campo es obligatorio.');
+        return false;
+      }
+      setFieldValid(inputElement);
+      return true;
+    }
+
+    // --- FUNCIONES PARA RUT ---
+    function validarRutChileno(rutCompleto) {
+      if (!rutCompleto || typeof rutCompleto !== 'string') return false;
+      rutCompleto = rutCompleto.replace(/\./g, '').toUpperCase();
+      if (!/^[0-9]+[-|‐]{1}[0-9K]{1}$/.test(rutCompleto)) return false;
+      var tmp = rutCompleto.split('-');
+      var digv = tmp[1];
+      var rut = tmp[0];
+      if (digv == 'K') digv = 'k';
+      return (dv(rut) == digv.toLowerCase());
+    }
+
+    function dv(T) {
+      var M = 0, S = 1;
+      for (; T; T = Math.floor(T / 10))
+        S = (S + T % 10 * (9 - M++ % 6)) % 11;
+      return S ? S - 1 : 'k';
+    }
+
+    function formatearRut(rutSinFormato) {
+      let valor = rutSinFormato.replace(/[^0-9kK]/gi, '').toUpperCase();
+      if (valor.length < 2) return valor;
+      let cuerpo = valor.slice(0, -1);
+      let dvInput = valor.slice(-1);
+      let cuerpoFormateado = "";
+      cuerpo = cuerpo.split("").reverse().join("");
+      for(let i = 0; i < cuerpo.length; i++){
+        if(i > 0 && i % 3 == 0){
+          cuerpoFormateado += ".";
+        }
+        cuerpoFormateado += cuerpo[i];
+      }
+      cuerpoFormateado = cuerpoFormateado.split("").reverse().join("");
+      return cuerpoFormateado + '-' + dvInput;
+    }
+
+    function formatearRutEnInput(inputElement) {
+      let valorActual = inputElement.value;
+      let rutLimpio = valorActual.replace(/[^0-9kK]/gi, '').toUpperCase();
+      if (rutLimpio.length > 0) {
+        inputElement.value = formatearRut(rutLimpio);
+      } else {
+        inputElement.value = '';
+      }
+      // Limpiar error al formatear, la validación se hace en blur o submit
+      let errorSpanId = inputElement.id + 'Error';
+      document.getElementById(errorSpanId).textContent = '';
+      inputElement.classList.remove('input-error');
+    }
+
+    // MODIFICADA: validarRutAlSalir ahora también verifica si es obligatorio Y RETORNA BOOLEANO
+    function validarRutAlSalir(inputElement, esObligatorio = false) {
+      let rutCompleto = inputElement.value;
+      let errorSpanId = inputElement.id + 'Error';
+      let errorSpan = document.getElementById(errorSpanId);
+      inputElement.classList.remove('input-error'); // Limpiar error previo
+      errorSpan.textContent = ''; // Limpiar mensaje previo
+      let esValido = true;
+
+      if (rutCompleto && rutCompleto.trim() !== "") {
+        let rutFormateado = formatearRut(rutCompleto.replace(/[.-]/g, '')); // Re-formatear por si acaso
+        inputElement.value = rutFormateado;
+
+        if (!validarRutChileno(rutFormateado)) {
+          errorSpan.textContent = 'RUT no válido.';
+          inputElement.classList.add('input-error');
+          esValido = false;
+        }
+      } else if (esObligatorio) {
+        errorSpan.textContent = 'RUT es obligatorio.'; // Mensaje específico para RUT
+        inputElement.classList.add('input-error');
+        esValido = false;
+      }
+      return esValido;
+    }
+
+    // MODIFICADA: validarEmailAlSalir ahora también verifica si es obligatorio Y RETORNA BOOLEANO
+    function validarEmailAlSalir(inputElement, esObligatorio = false) {
+      let email = inputElement.value;
+      let errorSpanId = inputElement.id + 'Error';
+      let errorSpan = document.getElementById(errorSpanId);
+      inputElement.classList.remove('input-error'); // Limpiar error previo
+      errorSpan.textContent = ''; // Limpiar mensaje previo
+      let esValido = true;
+
+      if (email && email.trim() !== "") {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          errorSpan.textContent = 'Formato de correo no válido.';
+          inputElement.classList.add('input-error');
+          esValido = false;
+        }
+      } else if (esObligatorio) {
+        errorSpan.textContent = 'Correo es obligatorio.';
+        inputElement.classList.add('input-error');
+        esValido = false;
+      }
+      return esValido;
+    }
+
+    // validarCampoObligatorioAlSalir ya retorna booleano y parece correcta
+    function validarCampoObligatorioAlSalir(inputElement, mensajeError) {
+      const errorSpan = document.getElementById(inputElement.id + 'Error');
+      inputElement.classList.remove('input-error');
+      errorSpan.textContent = '';
+
+      if (inputElement.offsetParent === null || !inputElement.required) {
+        return true;
+      }
+
+      if (!inputElement.value || (inputElement.tagName === 'SELECT' && inputElement.value === "")) {
+        errorSpan.textContent = mensajeError || 'Este campo es obligatorio.';
+        inputElement.classList.add('input-error');
+        return false;
+      }
+      return true;
+    }
+
+    // validarSeleccionFuncionarioAlSalir ya retorna booleano y parece correcta
+    function validarSeleccionFuncionarioAlSalir() {
+      const funcionarioInput = document.getElementById('funcionarioInput');
+      const idFuncionarioHidden = document.getElementById('idFuncionarioVisitado');
+      const errorSpan = document.getElementById('funcionarioInputError');
+      const direccionVisitada = document.getElementById('direccionVisitada');
+
+      // Solo validar si el campo es visible, requerido, y una dirección ha sido seleccionada
+      if (funcionarioInput.offsetParent === null || !funcionarioInput.required || !direccionVisitada.value) {
+        errorSpan.textContent = '';
+        funcionarioInput.classList.remove('input-error');
+        return true;
+      }
+
+      if (!idFuncionarioHidden.value) { // Si no hay un ID de funcionario válido seleccionado
+        // Mostrar error si el input tiene texto (pero no es válido) o si está vacío (y es obligatorio)
+        if (funcionarioInput.value.trim() !== "" && funcionarioInput.value.trim() !== funcionarioInput.placeholder) {
+            errorSpan.textContent = 'Seleccione un funcionario válido de la lista.';
+        } else {
+            errorSpan.textContent = 'Funcionario a visitar es obligatorio.';
+        }
+        funcionarioInput.classList.add('input-error');
+        return false;
+      } else {
+        errorSpan.textContent = '';
+        funcionarioInput.classList.remove('input-error');
+        return true;
+      }
+    }
+    
+    // validarSeleccionVisitanteSalida ya retorna booleano y parece correcta (para la versión con buscador)
+    function validarSeleccionVisitanteSalida() {
+        const inputElem = document.getElementById('visitanteSalidaInput');
+        const rutHidden = document.getElementById('rutSalidaHidden'); // Usamos el RUT hidden como indicador de selección válida
+        const errorSpan = document.getElementById('visitanteSalidaInputError');
+
+        // Solo validar si el campo es visible y requerido
+        if (inputElem.offsetParent === null || !inputElem.required) {
+            errorSpan.textContent = '';
+            inputElem.classList.remove('input-error');
+            return true;
+        }
+        if (!rutHidden.value) { // Si no se ha seleccionado un visitante (RUT no está)
+             if (inputElem.value.trim() !== "" && inputElem.value.trim() !== inputElem.placeholder) { // Si hay texto pero no válido
+                errorSpan.textContent = 'Seleccione un visitante válido de la lista.';
+            } else { // Si está vacío y es requerido
+                errorSpan.textContent = 'Debe seleccionar quién sale.';
+            }
+            inputElem.classList.add('input-error');
+            return false;
+        } else {
+            errorSpan.textContent = '';
+            inputElem.classList.remove('input-error');
+            return true;
+        }
+    }
+    
+    // --- FUNCIONES DE APOYO ---
+    function showError(error) {
+      document.getElementById('status').textContent = "Error: " + error.message;
+      console.error("Error en script:", error);
+    }
+
+    // --- LÓGICA DE ENVÍO DEL FORMULARIO ---
+    function enviarFormulario() {
+      let formValido = true;
+      const form = document.getElementById('visitorForm');
+      const tipoAccion = document.querySelector('input[name="tipoAccion"]:checked').value;
+
+      // Limpiar todas las validaciones previas visuales
+      form.querySelectorAll('.form-control, .form-select').forEach(el => el.classList.remove('is-invalid', 'is-valid'));
+      form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      
+      if (tipoAccion === 'Entrada') {
+        if (!validarCampoObligatorioAlSalir(form.nombreVisitante, 'Nombre de visitante es obligatorio.')) formValido = false;
+        if (!validarRutAlSalir(form.rutVisitante, true)) formValido = false;
+        if (!validarEmailAlSalir(form.correoVisitante, true)) formValido = false;
+        if (!validarCampoObligatorioAlSalir(form.pisoVisitado, 'Piso es obligatorio.')) formValido = false;
+        if (form.pisoVisitado.value) {
+          if (!validarCampoObligatorioAlSalir(form.direccionVisitada, 'Dirección es obligatoria.')) formValido = false;
+          if (form.direccionVisitada.value) {
+            if (!validarSeleccionFuncionarioAlSalir()) formValido = false;
+          }
+        }
+        if (!validarCampoObligatorioAlSalir(form.motivoVisita, 'Motivo de visita es obligatorio.')) formValido = false;
+        if (form.esEmpresa.value === 'Si' && form.nombreEmpresa.required) { // Chequear .required por si esEmpresa cambió
+          if (!validarCampoObligatorioAlSalir(form.nombreEmpresa, 'Nombre de empresa es obligatorio.')) formValido = false;
+        }
+      } else { // Salida
+        if (!validarSeleccionVisitanteSalida()) formValido = false;
+      }
+
+      if (!formValido) {
+        // Buscar el primer campo inválido y hacer scroll hacia él para mejor UX
+        const firstInvalidField = form.querySelector('.is-invalid');
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+            // Opcional: scrollIntoView
+            // firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        alert('Por favor, corrija los errores indicados en el formulario.');
+        return;
+      }
+
+      // ... (construcción de datosFormulario y google.script.run como antes, usando los IDs correctos) ...
+        const datosFormulario = {
+            tipoAccion: tipoAccion,
+            esEmpresa: (tipoAccion === 'Entrada') ? form.esEmpresa.value : null,
+            nombreEmpresa: (tipoAccion === 'Entrada' && form.esEmpresa.value === 'Si') ? form.nombreEmpresa.value : null,
+            nombreVisitante: (tipoAccion === 'Entrada') ? form.nombreVisitante.value : null,
+            rutVisitante: (tipoAccion === 'Entrada') ? form.rutVisitante.value : null,
+            correoVisitante: (tipoAccion === 'Entrada') ? form.correoVisitante.value : null,
+            pisoVisitado: (tipoAccion === 'Entrada') ? form.pisoVisitado.value : null,
+            direccionVisitada: (tipoAccion === 'Entrada') ? form.direccionVisitada.value : null,
+            idFuncionarioVisitado: (tipoAccion === 'Entrada') ? document.getElementById('idFuncionarioVisitado').value : null,
+            nombreFuncionarioVisitado: (tipoAccion === 'Entrada') ? document.getElementById('nombreFuncionarioVisitado').value : null,
+            motivoVisita: (tipoAccion === 'Entrada') ? form.motivoVisita.value : null,
+            rutSalida: (tipoAccion === 'Salida') ? document.getElementById('rutSalidaHidden').value : null,
+            nombreSalida: (tipoAccion === 'Salida') ? document.getElementById('nombreSalidaHidden').value : null,
+        };
+        
+        document.getElementById('status').textContent = "Enviando registro...";
+        document.querySelector('button[type="button"]').disabled = true;
+
+        google.script.run
+            .withSuccessHandler(respuesta => {
+                document.getElementById('status').textContent = respuesta;
+                document.querySelector('button[type="button"]').disabled = false;
+                if (respuesta.startsWith("Registro guardado")) {
+                    form.reset(); // Resetea valores de input
+                     // Bootstrap: quitar clases de validación después de reset
+                    form.querySelectorAll('.form-control, .form-select').forEach(el => el.classList.remove('is-invalid', 'is-valid'));
+                    form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+
+                    document.querySelector('input[name="tipoAccion"][value="Entrada"]').checked = true;
+                    toggleSections(); // Esto reconfigura required, visibilidad y carga datos si es salida
+                    // toggleSections ya limpia y deshabilita campos de entrada si se pasa a Salida.
+                    // Y si se queda en Entrada, los campos están listos para nuevo input.
+                    // Cargar pisos es genérico
+                    cargarPisos(); 
+                }
+            })
+            .withFailureHandler(error => {
+                showError(error);
+                document.querySelector('button[type="button"]').disabled = false;
+            })
+            .guardarRegistro(datosFormulario);
+    }
+    // Las funciones de formateo de RUT (validarRutChileno, dv, formatearRut, formatearRutEnInput)
+    // deben estar definidas aquí también (las incluí en tu script anterior).
+  </script>
+</body>
+</html>
